@@ -38,11 +38,11 @@ export const metadata: Metadata = {
     ],
   },
   verification: {
-    google: '구글_인증_코드를_여기에_입력하세요',
+    google: 'google59b2a0d6bfd03958',
     yandex: 'yandex',
     yahoo: 'yahoo',
     other: {
-      'naver-site-verification': '네이버_인증_코드를_여기에_입력하세요',
+      'naver-site-verification': '4ca1bbf7372952e751d827b2d22602a0654147b1',
     },
   },
 };
