@@ -1,7 +1,6 @@
 import ThemeToggle from "@/components/ThemeToggle";
 import NewsletterForm from "@/components/NewsletterForm";
 import Script from "next/script";
-import Head from "next/head";
 
 export default function Home() {
   const jsonLd = {
