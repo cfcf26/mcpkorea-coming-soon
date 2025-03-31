@@ -50,10 +50,11 @@ export default function NewsletterForm() {
       setIsSuccess(true);
       setEmail('');
       setConsentChecked(false);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error inserting email:', err);
+      const errorMessage = err instanceof Error ? err.message : '알 수 없는 오류';
       console.error('Full error object:', JSON.stringify(err, null, 2));
-      setError(`이메일 등록에 실패했습니다: ${err.message || '알 수 없는 오류'}`);
+      setError(`이메일 등록에 실패했습니다: ${errorMessage}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -75,6 +76,9 @@ export default function NewsletterForm() {
             </p>
             <p className="text-sm text-foreground/60 mt-1">
               * 언제든지 구독을 취소할 수 있으며, 개인정보는 안전하게 보호됩니다.
+            </p>
+            <p className="text-sm text-foreground/60 mt-1">
+              * 최신 MCP 기술 동향과 활용 사례도 함께 받아보세요!
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3">
