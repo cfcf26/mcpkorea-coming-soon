@@ -5,6 +5,7 @@ import { supabase } from '@/utils/supabase';
 
 export default function NewsletterForm() {
   const [email, setEmail] = useState('');
+  const [nickname, setNickname] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState('');
@@ -34,6 +35,7 @@ export default function NewsletterForm() {
         .from('waitlist')
         .insert([{ 
           email, 
+          nickname: nickname || null,
           created_at: new Date().toISOString(),
           email_consent: consentChecked
         }]);
@@ -49,6 +51,7 @@ export default function NewsletterForm() {
 
       setIsSuccess(true);
       setEmail('');
+      setNickname('');
       setConsentChecked(false);
     } catch (err: unknown) {
       console.error('Error inserting email:', err);
@@ -81,19 +84,26 @@ export default function NewsletterForm() {
               * 최신 MCP 기술 동향과 활용 사례도 함께 받아보세요!
             </p>
           </div>
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex flex-col gap-3">
             <input
               type="email"
-              placeholder="이메일 주소"
+              placeholder="이메일 주소를 입력하세요 (필수)"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="flex-1 px-4 py-3 border border-foreground/10 rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all hover:border-foreground/20"
+              className="w-full px-4 py-3 border border-foreground/10 rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all hover:border-foreground/20"
               required
+            />
+            <input
+              type="text"
+              placeholder="닉네임을 입력하세요 (선택)"
+              value={nickname}
+              onChange={(e) => setNickname(e.target.value)}
+              className="w-full px-4 py-3 border border-foreground/10 rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all hover:border-foreground/20"
             />
             <button
               type="submit"
               disabled={isSubmitting || !consentChecked}
-              className="px-6 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-all disabled:opacity-70 hover:shadow-md"
+              className="w-full px-6 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-all disabled:opacity-70 hover:shadow-md"
             >
               {isSubmitting ? '등록 중...' : '등록하기'}
             </button>
