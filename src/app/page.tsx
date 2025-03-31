@@ -22,6 +22,21 @@ export default function Home() {
           <NewsletterForm />
         </div>
         
+        <div className="w-full p-6 bg-foreground/5 rounded-xl border border-foreground/10">
+          <h3 className="text-xl font-semibold mb-4">MCP 오픈 카톡방 참여하기</h3>
+          <p className="text-foreground/80 mb-4">
+            MCP 관련 질문과 정보 공유를 위한 오픈 카톡방에 참여해보세요. 함께 배우고 성장하는 커뮤니티입니다.
+          </p>
+          <a 
+            href="https://open.kakao.com/o/gpxy27nh" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="inline-block px-6 py-3 bg-[#FEE500] text-black font-medium rounded-md hover:bg-[#F4DC00] transition-colors"
+          >
+            카카오톡 오픈채팅방 참여하기
+          </a>
+        </div>
+        
         <div className="mt-12 text-sm text-foreground/60">
           <p>© {new Date().getFullYear()} MCPKorea. All rights reserved.</p>
         </div>
