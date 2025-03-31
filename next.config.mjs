@@ -10,10 +10,6 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   compress: true,
-  i18n: {
-    locales: ['ko'],
-    defaultLocale: 'ko',
-  },
   productionBrowserSourceMaps: false,
 };
 
