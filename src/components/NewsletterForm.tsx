@@ -75,7 +75,7 @@ export default function NewsletterForm() {
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="text-center mb-2">
             <p className="text-foreground/80">
-              대기자 명단에 등록하면 MCP 사용법/활용법 뉴스레터를 일주일에 1번 이메일로 받아보실 수 있습니다.
+            대기자 명단에 이메일을 등록하시면 MCP 자료를 매주 순차적으로 보내드립니다.
             </p>
             <p className="text-sm text-foreground/60 mt-1">
               * 언제든지 구독을 취소할 수 있으며, 개인정보는 안전하게 보호됩니다.
