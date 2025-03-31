@@ -1,9 +1,32 @@
 import ThemeToggle from "@/components/ThemeToggle";
 import NewsletterForm from "@/components/NewsletterForm";
+import Script from "next/script";
 
 export default function Home() {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "MCP Korea",
+    "url": "https://mcpkorea.com",
+    "logo": "https://mcpkorea.com/android-chrome-512x512.png",
+    "description": "Model Context Protocol(MCP)은 인공지능과 도구 간의 상호작용을 위한 표준 프로토콜입니다. AI, LLM, Claude, Anthropic, Cursor, OpenAI, GPT 등의 최신 기술을 활용한 솔루션을 제공합니다.",
+    "sameAs": [
+      "https://open.kakao.com/o/gpxy27nh"
+    ],
+    "keywords": [
+      "Model Context Protocol", "MCP", "모델 컨텍스트 프로토콜", "AI", 
+      "LLM", "Claude", "Anthropic", "Cursor", "OpenAI", "GPT"
+    ]
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
+      <Script
+        id="schema-org-data"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      
       <ThemeToggle />
       
       <main className="w-full max-w-4xl mx-auto flex flex-col items-center justify-center gap-16 text-center">

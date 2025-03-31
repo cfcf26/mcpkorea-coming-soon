@@ -6,6 +6,15 @@ const nextConfig = {
     unoptimized: true,
   },
   trailingSlash: true,
+  poweredByHeader: false,
+  reactStrictMode: true,
+  swcMinify: true,
+  compress: true,
+  i18n: {
+    locales: ['ko'],
+    defaultLocale: 'ko',
+  },
+  productionBrowserSourceMaps: false,
 };
 
 export default nextConfig; 
