@@ -42,6 +42,3 @@ next-env.d.ts
 
 # Local Netlify folder
 .netlify
-
-# Netlify configuration with sensitive data
-netlify.toml
