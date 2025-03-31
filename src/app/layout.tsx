@@ -2,8 +2,20 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "MCPKorea - Coming Soon",
-  description: "MCP의 대중화, 간단한 클릭으로 세팅하는 MCP를 만나보세요.",
+  title: "MCP Korea",
+  description: "Model Context Protocol for Korea",
+  icons: {
+    icon: [
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+      { url: '/android-chrome-192x192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/android-chrome-512x512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+  },
 };
 
 export default function RootLayout({

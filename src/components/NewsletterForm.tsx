@@ -8,30 +8,52 @@ export default function NewsletterForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [consentChecked, setConsentChecked] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError('');
 
-    if (!email || !email.includes('@')) {
-      setError('유효한 이메일을 입력해 주세요.');
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+      setError('유효한 이메일 주소를 입력해 주세요.');
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!consentChecked) {
+      setError('이메일 발송에 동의해야 등록이 가능합니다.');
       setIsSubmitting(false);
       return;
     }
 
     try {
+      console.log('Attempting to insert email:', email);
       const { error } = await supabase
         .from('waitlist')
-        .insert([{ email, created_at: new Date().toISOString() }]);
+        .insert([{ 
+          email, 
+          created_at: new Date().toISOString(),
+          email_consent: consentChecked
+        }]);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error details:', error);
+        console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
+        console.error('Error details:', error.details);
+        console.error('Error hint:', error.hint);
+        throw error;
+      }
 
       setIsSuccess(true);
       setEmail('');
-    } catch (err) {
+      setConsentChecked(false);
+    } catch (err: any) {
       console.error('Error inserting email:', err);
-      setError('이메일 등록에 실패했습니다. 다시 시도해 주세요.');
+      console.error('Full error object:', JSON.stringify(err, null, 2));
+      setError(`이메일 등록에 실패했습니다: ${err.message || '알 수 없는 오류'}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -40,35 +62,55 @@ export default function NewsletterForm() {
   return (
     <div className="max-w-md w-full mx-auto">
       {isSuccess ? (
-        <div className="text-center p-4 bg-green-100 dark:bg-green-900 rounded-lg">
+        <div className="text-center p-6 bg-green-100 dark:bg-green-900/50 rounded-lg shadow-inner">
           <p className="text-green-700 dark:text-green-300 font-medium">
             등록해 주셔서 감사합니다! MCP 관련 최신 소식을 이메일로 전해드리겠습니다.
           </p>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="text-center mb-2">
             <p className="text-foreground/80">
               대기자 명단에 등록하면 MCP 사용법/활용법 뉴스레터를 일주일에 1번 이메일로 받아보실 수 있습니다.
             </p>
+            <p className="text-sm text-foreground/60 mt-1">
+              * 언제든지 구독을 취소할 수 있으며, 개인정보는 안전하게 보호됩니다.
+            </p>
           </div>
-          <div className="flex flex-col sm:flex-row gap-2">
+          <div className="flex flex-col sm:flex-row gap-3">
             <input
               type="email"
               placeholder="이메일 주소"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="flex-1 px-4 py-2 border border-foreground/10 rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-4 py-3 border border-foreground/10 rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all hover:border-foreground/20"
               required
             />
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-70"
+              disabled={isSubmitting || !consentChecked}
+              className="px-6 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-all disabled:opacity-70 hover:shadow-md"
             >
               {isSubmitting ? '등록 중...' : '등록하기'}
             </button>
           </div>
+          
+          <div className="flex items-start mt-1">
+            <div className="flex items-center h-5">
+              <input
+                id="email-consent"
+                type="checkbox"
+                checked={consentChecked}
+                onChange={(e) => setConsentChecked(e.target.checked)}
+                className="w-4 h-4 border border-foreground/20 rounded bg-background focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            <label htmlFor="email-consent" className="ml-2 text-sm text-foreground/80">
+              MCP 뉴스레터 및 정보 이메일 수신에 동의합니다. (필수)
+            </label>
+          </div>
+          
           {error && (
             <p className="text-red-500 text-sm mt-1">{error}</p>
           )}
