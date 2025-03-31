@@ -1,0 +1,81 @@
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Model Context Protocol (MCP) 이해하기",
+  "description": "Model Context Protocol(MCP)은 AI 시스템이 다양한 외부 도구와 통신하고 상호작용할 수 있도록 설계된 표준 프로토콜입니다.",
+  "keywords": "Model Context Protocol, MCP, 모델 컨텍스트 프로토콜, AI, LLM, Claude, Anthropic, Cursor, OpenAI, GPT",
+  "datePublished": "2024-03-30",
+  "dateModified": "2024-04-01",
+  "articleSection": "AI Technology",
+  "inLanguage": "ko-KR",
+  "author": {
+    "@type": "Organization",
+    "name": "MCP Korea",
+    "url": "https://mcpkorea.com",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://mcpkorea.com/android-chrome-512x512.png",
+      "width": 512,
+      "height": 512
+    }
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "MCP Korea",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://mcpkorea.com/android-chrome-512x512.png",
+      "width": 512,
+      "height": 512
+    }
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://mcpkorea.com"
+  },
+  "about": {
+    "@type": "Thing",
+    "name": "Model Context Protocol",
+    "description": "AI 모델과 도구 간의 상호작용을 위한 표준 프로토콜",
+    "sameAs": "https://github.com/anthropics/anthropic-tools"
+  },
+  "mentions": [
+    {
+      "@type": "SoftwareApplication",
+      "name": "Claude",
+      "applicationCategory": "AI Assistant",
+      "operatingSystem": "All",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    },
+    {
+      "@type": "SoftwareApplication",
+      "name": "Cursor",
+      "applicationCategory": "Development Environment",
+      "operatingSystem": "All"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "name": "GPT",
+      "applicationCategory": "AI Assistant",
+      "operatingSystem": "All"
+    }
+  ],
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "MCP Korea",
+    "url": "https://mcpkorea.com"
+  },
+  "accessMode": ["textual", "visual"],
+  "accessibilityControl": ["fullKeyboardControl", "fullMouseControl"],
+  "accessibilityFeature": ["highContrast", "readingOrder", "structuredNavigation"],
+  "accessibilityHazard": ["noFlashingHazard", "noMotionSimulationHazard", "noSoundHazard"],
+  "educationalUse": ["training", "instruction"],
+  "audience": {
+    "@type": "Audience",
+    "audienceType": "Developers, AI Engineers, Tech Enthusiasts"
+  }
+} 
