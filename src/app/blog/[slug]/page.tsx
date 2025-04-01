@@ -3,69 +3,206 @@ import ThemeToggle from "@/components/ThemeToggle";
 import Link from 'next/link';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { markdownToSafeHtml } from '@/utils/markdown';
+import { formatDate, isRecentDate } from '@/utils/date';
+import { getBlogPostById, getAllBlogPosts, type BlogPost } from '@/utils/contentful';
 import Script from 'next/script';
+import RichTextRenderer from '@/components/blog/RichTextRenderer';
+import { Document } from '@contentful/rich-text-types';
 
-// 임시 블로그 포스트 데이터
-// 나중에 Contentful이 설정되면 교체됩니다
-const TEMP_BLOG_POSTS = [
-  {
-    id: "1",
-    fields: {
-      title: "MCP란 무엇인가? Model Context Protocol 소개",
-      slug: "mcp-introduction",
-      excerpt: "Model Context Protocol(MCP)은 인공지능과 도구 간의 상호작용을 위한 표준 프로토콜입니다. 이 글에서는 MCP가 무엇인지, 어떻게 작동하는지 알아봅니다.",
-      content: `
-# MCP란 무엇인가? Model Context Protocol 소개
-
-Model Context Protocol(MCP)은 인공지능과 도구 간의 상호작용을 위한 표준 프로토콜입니다. 대규모 언어 모델(LLM)이 다양한 도구와 상호작용할 수 있도록 하는 통일된 인터페이스를 제공합니다.
-
-## MCP의 주요 특징
-
-1. **표준화된 통신 방식**: MCP는 AI와 도구 간의 통신을 위한 표준화된 형식과 프로토콜을 제공합니다.
-2. **확장성**: 다양한 AI 모델과 도구를 통합할 수 있도록 설계되었습니다.
-3. **상호 운용성**: 서로 다른 시스템 간의 원활한 상호 작용을 가능하게 합니다.
-4. **효율성**: 통일된 인터페이스를 통해 개발 및 구현 과정을 단순화합니다.
-
-## MCP의 활용 분야
-
-- **개발 자동화**: 코드 작성, 디버깅, 배포 과정 자동화
-- **콘텐츠 생성**: 글쓰기, 이미지 생성, 동영상 편집 등
-- **데이터 분석**: 데이터 쿼리, 시각화, 인사이트 도출
-- **업무 자동화**: 일정 관리, 이메일 작성, 문서 요약 등
-
-MCP Korea는 한국에서 MCP 기술의 보급과 활용을 위해 노력하고 있습니다. 더 많은 정보와 업데이트를 원하시면 계속해서 MCP Korea 블로그를 방문해 주세요.
-      `,
-      author: "MCP Korea Team",
-      tags: ["MCP", "소개", "프로토콜"]
-    },
-    sys: {
-      id: "1",
-      createdAt: "2024-04-01T00:00:00Z",
-      updatedAt: "2024-04-01T00:00:00Z"
-    }
-  }
-];
-
-// 임시 데이터에서 포스트 가져오기
-async function getPostData(slug: string) {
-  return TEMP_BLOG_POSTS.find(post => post.fields.slug === slug) || null;
+// Contentful API 응답 타입
+interface ContentfulEntry {
+  sys: {
+    id: string;
+    createdAt?: string;
+    updatedAt?: string;
+    [key: string]: unknown;
+  };
+  fields: Record<string, unknown>;
 }
 
-// 모든 슬러그 가져오기
-async function getAllSlugs() {
-  return TEMP_BLOG_POSTS.map(post => ({
-    slug: post.fields.slug
-  }));
+// 특정 ID의 블로그 포스트 데이터를 가져오는 함수 (명시적 캐싱 적용)
+async function getPostData(id: string): Promise<BlogPost | null> {
+  try {
+    // 블로그 포스트 가져오기
+    const entryResponse = await fetch(
+      `https://cdn.contentful.com/spaces/${process.env.CONTENTFUL_SPACE_ID}/environments/master/entries/${id}?access_token=${process.env.CONTENTFUL_ACCESS_TOKEN}`,
+      {
+        next: { revalidate: 300 }
+      }
+    );
+    
+    if (!entryResponse.ok) {
+      console.error('블로그 포스트 가져오기 실패:', entryResponse.status);
+      return await getBlogPostById(id);
+    }
+    
+    const entryData = await entryResponse.json();
+    
+    // 임베디드 에셋 ID 추출
+    const embeddedAssetIds: string[] = [];
+    
+    // 리치 텍스트 콘텐츠 분석
+    if (entryData.fields?.content && typeof entryData.fields.content === 'object') {
+      const findAssets = (nodes: any[]) => {
+        if (!nodes || !Array.isArray(nodes)) return;
+        
+        nodes.forEach(node => {
+          if (node.nodeType === 'embedded-asset-block' && node.data?.target?.sys?.id) {
+            embeddedAssetIds.push(node.data.target.sys.id);
+          }
+          
+          if (node.content && Array.isArray(node.content)) {
+            findAssets(node.content);
+          }
+        });
+      };
+      
+      if (entryData.fields.content.content) {
+        findAssets(entryData.fields.content.content);
+      }
+    }
+    
+    console.log('추출된 에셋 ID들:', embeddedAssetIds);
+    
+    // 각 에셋을 개별적으로 가져오기
+    const assets: Record<string, any> = {};
+    
+    // 추출된 에셋이 있는 경우에만 가져오기
+    if (embeddedAssetIds.length > 0) {
+      const assetPromises = embeddedAssetIds.map(async (assetId) => {
+        try {
+          const assetResponse = await fetch(
+            `https://cdn.contentful.com/spaces/${process.env.CONTENTFUL_SPACE_ID}/environments/master/assets/${assetId}?access_token=${process.env.CONTENTFUL_ACCESS_TOKEN}`,
+            {
+              next: { revalidate: 300 }
+            }
+          );
+          
+          if (!assetResponse.ok) {
+            console.error(`에셋 가져오기 실패: ${assetId}`, assetResponse.status);
+            return null;
+          }
+          
+          const assetData = await assetResponse.json();
+          return assetData;
+        } catch (assetError) {
+          console.error(`에셋 가져오기 오류: ${assetId}`, assetError);
+          return null;
+        }
+      });
+      
+      const assetResults = await Promise.all(assetPromises);
+      
+      // 유효한 에셋만 맵에 추가
+      assetResults.forEach(asset => {
+        if (asset && asset.sys && asset.sys.id) {
+          // RichTextRenderer 컴포넌트에 맞는 형식으로 변환
+          assets[asset.sys.id] = {
+            sys: {
+              id: asset.sys.id
+            },
+            fields: {
+              title: asset.fields?.title || '',
+              description: asset.fields?.description || '',
+              file: {
+                url: asset.fields?.file?.url || '',
+                details: {
+                  size: asset.fields?.file?.details?.size || 0,
+                  image: asset.fields?.file?.details?.image || {
+                    width: 800,
+                    height: 450
+                  }
+                },
+                fileName: asset.fields?.file?.fileName || '',
+                contentType: asset.fields?.file?.contentType || 'image/jpeg'
+              }
+            }
+          };
+        }
+      });
+    }
+    
+    console.log('가져온 에셋 키:', Object.keys(assets));
+    
+    // 포스트 데이터 반환
+    return {
+      fields: {
+        title: entryData.fields?.title || '',
+        content: entryData.fields?.content || '',
+        summary: entryData.fields?.summary || '',
+        author: entryData.fields?.author || '',
+        publishDate: entryData.fields?.publishDate || '',
+        tags: entryData.fields?.tags || [],
+        seoTitle: entryData.fields?.seoTitle || '',
+        featured: entryData.fields?.featured || false,
+        assets: assets
+      },
+      sys: {
+        id: entryData.sys?.id || id,
+        createdAt: entryData.sys?.createdAt || new Date().toISOString(),
+        updatedAt: entryData.sys?.updatedAt || new Date().toISOString()
+      }
+    };
+  } catch (error) {
+    console.error('Error fetching blog post:', error);
+    return null;
+  }
+}
+
+// 모든 블로그 포스트 ID를 가져오는 함수 (명시적 캐싱 적용)
+async function getAllPostIds() {
+  try {
+    // Next.js 15에서는 명시적 캐싱 설정 필요
+    const response = await fetch(
+      `https://cdn.contentful.com/spaces/${process.env.CONTENTFUL_SPACE_ID}/environments/master/entries?content_type=mcpKoreaBlogPost&access_token=${process.env.CONTENTFUL_ACCESS_TOKEN}`,
+      { 
+        // 1시간 캐시 유지 (3600초)
+        next: { revalidate: 3600 } 
+      }
+    );
+    
+    // 백업: fetch가 실패하면 SDK 사용
+    if (!response.ok) {
+      const posts = await getAllBlogPosts();
+      return posts
+        .filter((post: any) => post.sys && post.sys.id)
+        .map((post: any) => ({
+          slug: post.sys.id,
+        }));
+    }
+    
+    const data = await response.json();
+    
+    // 유효한 ID가 있는 항목만 필터링
+    return data.items
+      .filter((item: ContentfulEntry) => item.sys && item.sys.id)
+      .map((item: ContentfulEntry) => ({
+        slug: item.sys.id,
+      }));
+  } catch (error) {
+    console.error('Error fetching post IDs:', error);
+    // 오류 발생 시 기본값 반환
+    return [];
+  }
 }
 
 // 동적 메타데이터 생성
 export async function generateMetadata({
   params,
 }: {
-  params: { slug: string };
+  params: { slug: string } | Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const post = await getPostData(params.slug);
+  // Next.js 15에서는 params가 Promise일 수 있음
+  const resolvedParams = await Promise.resolve(params);
+  const slug = resolvedParams.slug;
+  
+  if (!slug) {
+    return {
+      title: '포스트를 찾을 수 없습니다 - MCP Korea',
+    };
+  }
+  
+  const post = await getPostData(slug);
   
   if (!post) {
     return {
@@ -76,37 +213,45 @@ export async function generateMetadata({
   const { fields } = post;
   
   return {
-    title: `${fields.title} - MCP Korea 블로그`,
-    description: fields.excerpt,
-    keywords: [...fields.tags, 'MCP 블로그', 'AI 블로그', '모델 컨텍스트 프로토콜'],
+    title: `${fields.seoTitle || fields.title} - MCP Korea 블로그`,
+    description: fields.summary,
+    keywords: [...(fields.tags || []), 'MCP 블로그', 'AI 블로그', '모델 컨텍스트 프로토콜'],
     openGraph: {
       title: `${fields.title} - MCP Korea 블로그`,
-      description: fields.excerpt,
-      url: `https://mcpkorea.com/blog/${fields.slug}`,
+      description: fields.summary,
+      url: `https://mcpkorea.com/blog/${slug}`,
       type: 'article',
-      publishedTime: post.sys.createdAt,
-      authors: [fields.author],
+      publishedTime: fields.publishDate || post.sys.createdAt,
+      authors: [fields.author || 'MCP Korea Team'],
       tags: fields.tags,
     },
     twitter: {
       card: 'summary_large_image',
       title: fields.title,
-      description: fields.excerpt,
+      description: fields.summary,
     },
   };
 }
 
 // 정적 경로 생성을 위한 함수
 export async function generateStaticParams() {
-  return await getAllSlugs();
+  return await getAllPostIds();
 }
 
 export default async function BlogPost({
   params,
 }: {
-  params: { slug: string };
+  params: { slug: string } | Promise<{ slug: string }>;
 }) {
-  const post = await getPostData(params.slug);
+  // Next.js 15에서는 params가 Promise일 수 있음
+  const resolvedParams = await Promise.resolve(params);
+  const slug = resolvedParams.slug;
+  
+  if (!slug) {
+    notFound();
+  }
+  
+  const post = await getPostData(slug);
   
   // 포스트가 없으면 404 페이지로 리디렉션
   if (!post) {
@@ -114,14 +259,17 @@ export default async function BlogPost({
   }
 
   const { fields, sys } = post;
-  const contentHtml = markdownToSafeHtml(fields.content);
+  const dateStr = fields.publishDate || sys.createdAt;
+  const formattedDate = formatDate(dateStr);
+  const isRecent = isRecentDate(dateStr, 14); // 14일 이내면 최신 글
 
   return (
     <div className="min-h-screen flex flex-col">
       <ThemeToggle />
       
       <article className="flex-1 w-full max-w-4xl mx-auto px-4 py-16">
-        <div className="mb-6">
+        {/* 상단 네비게이션 */}
+        <div className="mb-8">
           <Link 
             href="/blog"
             className="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors"
@@ -133,15 +281,11 @@ export default async function BlogPost({
           </Link>
         </div>
         
-        <header className="mb-8">
-          <h1 className="text-4xl font-bold mb-4">{fields.title}</h1>
-          <div className="flex text-sm text-foreground/60 mb-4">
-            <span>{fields.author}</span>
-            <span className="mx-2">•</span>
-            <time dateTime={sys.createdAt}>{new Date(sys.createdAt).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}</time>
-          </div>
-          {fields.tags && (
-            <div className="flex flex-wrap gap-2 mb-6">
+        {/* 블로그 헤더 */}
+        <header className="mb-12">
+          {/* 태그 */}
+          {fields.tags && fields.tags.length > 0 && (
+            <div className="mb-4 flex flex-wrap gap-2">
               {fields.tags.map((tag: string) => (
                 <span 
                   key={tag} 
@@ -152,12 +296,48 @@ export default async function BlogPost({
               ))}
             </div>
           )}
+          
+          {/* 제목 */}
+          <h1 className="text-4xl font-bold mb-6">{fields.title}</h1>
+          
+          {/* 메타 정보 */}
+          <div className="flex flex-wrap items-center text-sm text-foreground/60 mb-6">
+            <span className="font-medium">{fields.author || 'MCP Korea Team'}</span>
+            <span className="mx-2">•</span>
+            <time dateTime={dateStr} className="flex items-center">
+              {formattedDate}
+              {isRecent && (
+                <span className="ml-2 px-1.5 py-0.5 text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded">New</span>
+              )}
+            </time>
+          </div>
+          
+          {/* 요약 */}
+          {fields.summary && (
+            <p className="text-lg text-foreground/80 mb-6 font-medium border-l-4 border-blue-500 pl-4 py-2">
+              {fields.summary}
+            </p>
+          )}
         </header>
         
-        <div 
-          className="prose prose-lg dark:prose-invert max-w-none"
-          dangerouslySetInnerHTML={{ __html: contentHtml }}
-        />
+        {/* 본문 내용 */}
+        <div className="prose prose-lg dark:prose-invert max-w-none">
+          {typeof fields.content === 'object' ? (
+            <RichTextRenderer content={fields.content as Document} assets={fields.assets} />
+          ) : (
+            <div dangerouslySetInnerHTML={{ __html: fields.content as string || '' }} />
+          )}
+        </div>
+        
+        {/* 작성자 정보 */}
+        <div className="mt-16 pt-8 border-t border-foreground/10">
+          <div className="flex items-center">
+            <div>
+              <h3 className="font-bold">작성자</h3>
+              <p className="text-foreground/80">{fields.author || 'MCP Korea Team'}</p>
+            </div>
+          </div>
+        </div>
       </article>
       
       {/* 구조화된 데이터 */}
@@ -169,12 +349,12 @@ export default async function BlogPost({
             "@context": "https://schema.org",
             "@type": "BlogPosting",
             "headline": fields.title,
-            "description": fields.excerpt,
+            "description": fields.summary,
             "author": {
               "@type": "Person",
-              "name": fields.author
+              "name": fields.author || 'MCP Korea Team'
             },
-            "datePublished": sys.createdAt,
+            "datePublished": fields.publishDate || sys.createdAt,
             "dateModified": sys.updatedAt,
             "publisher": {
               "@type": "Organization",
@@ -184,10 +364,10 @@ export default async function BlogPost({
                 "url": "https://mcpkorea.com/android-chrome-512x512.png"
               }
             },
-            "keywords": fields.tags.join(", "),
+            "keywords": (fields.tags || []).join(", "),
             "mainEntityOfPage": {
               "@type": "WebPage",
-              "@id": `https://mcpkorea.com/blog/${fields.slug}`
+              "@id": `https://mcpkorea.com/blog/${slug}`
             }
           })
         }}
