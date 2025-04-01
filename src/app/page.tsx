@@ -224,7 +224,7 @@ export default function Home() {
       <main className="w-full max-w-4xl mx-auto flex flex-col items-center justify-center gap-16 text-center">
         <div className="space-y-8">
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
-            MCPKorea Coming Soon
+            MCP Korea Coming Soon
           </h1>
           
           <h2 className="text-xl md:text-2xl text-foreground/80 max-w-2xl mx-auto font-medium">
