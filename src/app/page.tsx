@@ -1,5 +1,6 @@
 import ThemeToggle from "@/components/ThemeToggle";
 import NewsletterForm from "@/components/NewsletterForm";
+import Footer from "@/components/Footer";
 import Script from "next/script";
 
 export default function Home() {
@@ -122,7 +123,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen flex flex-col">
       <Script
         id="schema-org-organization"
         type="application/ld+json"
@@ -221,7 +222,7 @@ export default function Home() {
       
       <ThemeToggle />
       
-      <main className="w-full max-w-4xl mx-auto flex flex-col items-center justify-center gap-16 text-center">
+      <main className="flex-1 w-full max-w-4xl mx-auto flex flex-col items-center justify-center gap-16 text-center p-4">
         <div className="space-y-8">
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
             MCP Korea Coming Soon
@@ -251,11 +252,9 @@ export default function Home() {
             카카오톡 오픈채팅방 참여하기
           </a>
         </div>
-        
-        <div className="mt-16 text-sm text-foreground/60">
-          <p>© {new Date().getFullYear()} MCPKorea. All rights reserved.</p>
-        </div>
       </main>
+      
+      <Footer />
     </div>
   );
 }
