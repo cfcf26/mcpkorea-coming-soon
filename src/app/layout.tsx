@@ -4,7 +4,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "MCP Korea - 모델 컨텍스트 프로토콜",
   description: "Model Context Protocol(MCP)은 인공지능과 도구 간의 상호작용을 위한 표준 프로토콜입니다. AI, LLM, Claude, Anthropic, Cursor, OpenAI, GPT 등의 최신 기술을 활용한 솔루션을 제공합니다.",
-  keywords: ["Model Context Protocol", "MCP", "모델 컨텍스트 프로토콜", "AI", "LLM", "Claude", "Anthropic", "Cursor", "OpenAI", "GPT", "인공지능", "대규모 언어 모델", "한국 AI", "LLM 도구", "AI 기술", "AI 프로토콜", "AI 개발", "인공지능 도구"],
+  keywords: ["Model Context Protocol", "MCP", "mcp", "모델 컨텍스트 프로토콜", "AI", "LLM", "Claude", "Anthropic", "Cursor", "OpenAI", "GPT", "클로드", "Claude mcp", "클로드 mcp", "커서 mcp", "openai mcp", "오픈ai mcp", "인공지능", "대규모 언어 모델", "한국 AI", "LLM 도구", "AI 기술", "AI 프로토콜", "AI 개발", "인공지능 도구"],
   authors: [{ name: "MCP Korea Team" }],
   creator: "MCP Korea",
   publisher: "MCP Korea",

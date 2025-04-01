@@ -228,7 +228,7 @@ export default function Home() {
           </h1>
           
           <h2 className="text-xl md:text-2xl text-foreground/80 max-w-2xl mx-auto font-medium">
-            MCP의 대중화를 위한 첫걸음, 간단한 클릭으로 세팅하는 MCP를 곧 만나보실 수 있습니다.
+            MCP의 대중화를 위한 첫걸음, 클릭 한번으로 간단하게 세팅하는 MCP를 곧 만나보실 수 있습니다.
           </h2>
         </div>
         
