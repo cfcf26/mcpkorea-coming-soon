@@ -1,7 +1,16 @@
+'use client';
+
+import React from 'react';
 import { documentToReactComponents } from '@contentful/rich-text-react-renderer';
 import { BLOCKS, INLINES, MARKS, Document } from '@contentful/rich-text-types';
 import Image from 'next/image';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
+
+// 동적 임포트를 통한 무거운 컴포넌트 최적화
+const VideoPlayer = dynamic(() => import('./media/VideoPlayer'), { ssr: false });
+const AudioPlayer = dynamic(() => import('./media/AudioPlayer'), { ssr: false });
+const FileDownloader = dynamic(() => import('./media/FileDownloader'), { ssr: false });
 
 interface Asset {
   sys: {
@@ -31,6 +40,23 @@ interface RichTextRendererProps {
   assets?: {
     [key: string]: Asset;
   };
+}
+
+// Contentful 이미지 URL 최적화 유틸리티 함수
+function optimizeContentfulImageUrl(url: string): string {
+  if (!url) return '';
+  
+  // URL이 Contentful CDN인지 확인
+  if (url.includes('ctfassets.net')) {
+    // HTTPS 프로토콜 추가
+    let optimizedUrl = url.startsWith('//') ? `https:${url}` : url;
+    
+    // 웹 최적화 파라미터만 추가 (no-cookie 제거)
+    const separator = optimizedUrl.includes('?') ? '&' : '?';
+    return `${optimizedUrl}${separator}fm=webp&fit=fill&q=85`;
+  }
+  
+  return url;
 }
 
 export default function RichTextRenderer({ content, className = '', assets = {} }: RichTextRendererProps) {
@@ -179,9 +205,12 @@ export default function RichTextRenderer({ content, className = '', assets = {} 
         
         // URL 정규화 (https: 접두사 추가)
         const url = file.url.startsWith('//') ? `https:${file.url}` : 
-                   file.url.startsWith('/') ? `https:/${file.url}` : 
-                   file.url.startsWith('http') ? file.url : `https:${file.url}`;
-                   
+                  file.url.startsWith('/') ? `https:/${file.url}` : 
+                  file.url.startsWith('http') ? file.url : `https:${file.url}`;
+                  
+        // 쿠키 없는 최적화된 URL 생성
+        const optimizedUrl = optimizeContentfulImageUrl(url);
+        
         const contentType = file.contentType;
 
         // 이미지인 경우
@@ -193,11 +222,13 @@ export default function RichTextRenderer({ content, className = '', assets = {} 
               <figure className="flex flex-col items-center">
                 <div className="overflow-hidden rounded-lg border border-foreground/10">
                   <Image
-                    src={url}
+                    src={optimizedUrl}
                     alt={title || '이미지'}
                     width={width}
                     height={height}
                     className="max-w-full h-auto"
+                    loading="lazy"
+                    unoptimized={true} // Contentful 이미지는 이미 최적화되어 있음
                   />
                 </div>
                 {title && title !== file.fileName && (
@@ -218,8 +249,9 @@ export default function RichTextRenderer({ content, className = '', assets = {} 
                 <video 
                   controls 
                   className="max-w-full rounded-lg border border-foreground/10"
+                  preload="none"
                 >
-                  <source src={url} type={contentType} />
+                  <source src={optimizedUrl} type={contentType} />
                   브라우저에서 비디오를 지원하지 않습니다.
                 </video>
                 {title && title !== file.fileName && (
@@ -240,8 +272,9 @@ export default function RichTextRenderer({ content, className = '', assets = {} 
                 <audio 
                   controls 
                   className="w-full max-w-md"
+                  preload="none"
                 >
-                  <source src={url} type={contentType} />
+                  <source src={optimizedUrl} type={contentType} />
                   브라우저에서 오디오를 지원하지 않습니다.
                 </audio>
                 {title && (
@@ -257,27 +290,12 @@ export default function RichTextRenderer({ content, className = '', assets = {} 
         // PDF나 기타 파일인 경우
         else {
           return (
-            <div className="my-6">
-              <div className="p-4 border border-foreground/10 rounded-lg bg-foreground/5">
-                <div className="flex items-center">
-                  <div className="mr-4 text-3xl">📎</div>
-                  <div className="flex-1">
-                    <h4 className="font-medium">{title || file.fileName}</h4>
-                    <p className="text-sm text-foreground/60">
-                      {(file.details.size / 1024 / 1024).toFixed(2)} MB • {file.contentType}
-                    </p>
-                  </div>
-                  <a 
-                    href={url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm"
-                  >
-                    다운로드
-                  </a>
-                </div>
-              </div>
-            </div>
+            <FileDownloader 
+              url={optimizedUrl} 
+              title={title || file.fileName} 
+              fileDetails={file.details} 
+              contentType={file.contentType} 
+            />
           );
         }
       },

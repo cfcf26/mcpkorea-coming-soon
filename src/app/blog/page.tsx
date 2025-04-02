@@ -66,8 +66,15 @@ async function getPostsData(): Promise<BlogPost[]> {
     const assets: Record<string, any> = {};
     if (data.includes?.Asset) {
       data.includes.Asset.forEach((asset: any) => {
+        let imageUrl = asset.fields.file?.url ? `https:${asset.fields.file.url}` : '';
+        
+        // 이미지 URL 최적화
+        if (imageUrl && imageUrl.includes('ctfassets.net')) {
+          imageUrl = optimizeContentfulImageUrl(imageUrl);
+        }
+        
         assets[asset.sys.id] = {
-          url: asset.fields.file?.url ? `https:${asset.fields.file.url}` : '',
+          url: imageUrl,
           title: asset.fields.title || '',
           description: asset.fields.description || '',
           width: asset.fields.file?.details?.image?.width || 800,
@@ -292,6 +299,23 @@ function FeaturedPostCard({ post }: { post: BlogPost }) {
   );
 }
 
+// Contentful 이미지 URL 최적화 유틸리티 함수
+function optimizeContentfulImageUrl(url: string): string {
+  if (!url) return '';
+  
+  // URL이 Contentful CDN인지 확인
+  if (url.includes('ctfassets.net')) {
+    // HTTPS 프로토콜 추가
+    let optimizedUrl = url.startsWith('//') ? `https:${url}` : url;
+    
+    // 웹 최적화 파라미터만 추가 (no-cookie 제거)
+    const separator = optimizedUrl.includes('?') ? '&' : '?';
+    return `${optimizedUrl}${separator}fm=webp&fit=fill&q=85`;
+  }
+  
+  return url;
+}
+
 // 일반 블로그 포스트 카드 컴포넌트
 function BlogPostCard({ post }: { post: BlogPost }) {
   const { fields, sys } = post;
@@ -305,9 +329,10 @@ function BlogPostCard({ post }: { post: BlogPost }) {
       {fields.featuredImage && 'url' in fields.featuredImage && (
         <div className="relative h-44 w-full overflow-hidden bg-gray-100 dark:bg-gray-700">
           <img
-            src={fields.featuredImage.url}
+            src={optimizeContentfulImageUrl(fields.featuredImage.url)}
             alt={fields.featuredImage.alt || String(fields.title)}
             className="h-full w-full object-cover transform group-hover:scale-105 transition-transform duration-300"
+            loading="lazy"
           />
         </div>
       )}

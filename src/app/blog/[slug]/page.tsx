@@ -20,6 +20,23 @@ interface ContentfulEntry {
   fields: Record<string, unknown>;
 }
 
+// Contentful 이미지 URL 최적화 유틸리티 함수
+function optimizeContentfulImageUrl(url: string): string {
+  if (!url) return '';
+  
+  // URL이 Contentful CDN인지 확인
+  if (url.includes('ctfassets.net')) {
+    // HTTPS 프로토콜 추가
+    let optimizedUrl = url.startsWith('//') ? `https:${url}` : url;
+    
+    // 웹 최적화 파라미터만 추가 (no-cookie 제거)
+    const separator = optimizedUrl.includes('?') ? '&' : '?';
+    return `${optimizedUrl}${separator}fm=webp&fit=fill&q=85`;
+  }
+  
+  return url;
+}
+
 // 특정 ID의 블로그 포스트 데이터를 가져오는 함수 (명시적 캐싱 적용)
 async function getPostData(id: string): Promise<BlogPost | null> {
   try {
@@ -105,7 +122,7 @@ async function getPostData(id: string): Promise<BlogPost | null> {
               title: asset.fields?.title || '',
               description: asset.fields?.description || '',
               file: {
-                url: asset.fields?.file?.url || '',
+                url: optimizeContentfulImageUrl(asset.fields?.file?.url || ''),
                 details: {
                   size: asset.fields?.file?.details?.size || 0,
                   image: asset.fields?.file?.details?.image || {
