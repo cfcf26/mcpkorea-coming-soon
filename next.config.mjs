@@ -11,6 +11,22 @@ const nextConfig = {
   compress: true,
   productionBrowserSourceMaps: false,
   
+  // 로봇과 사이트맵 처리 설정 - Next.js 15 최적화
+  async rewrites() {
+    return [
+      // 사이트맵 처리 (명시적으로 정의)
+      {
+        source: '/sitemap.xml',
+        destination: '/api/sitemap',
+      },
+      // 로봇 처리 (명시적으로 정의)
+      {
+        source: '/robots.txt',
+        destination: '/api/robots',
+      },
+    ];
+  },
+  
   // 정적 파일 캐싱 최적화
   async headers() {
     return [
@@ -31,6 +47,16 @@ const nextConfig = {
           {
             key: 'Cache-Control',
             value: 'public, max-age=3600, must-revalidate',
+          },
+        ],
+      },
+      {
+        // robots.txt 및 sitemap.xml 파일에 대한 명시적 캐시 설정
+        source: '/(robots.txt|sitemap.xml)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=7200, must-revalidate',
           },
         ],
       },

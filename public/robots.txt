@@ -1,4 +1,19 @@
+# MCP Korea 웹사이트 robots.txt
 User-agent: *
 Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /*.json$
+Disallow: /private/
 
-Sitemap: https://mcpkorea.com/sitemap.xml 
+User-agent: Googlebot
+Allow: /
+Disallow: /admin/
+
+User-agent: Bingbot
+Allow: /
+Disallow: /admin/
+
+# 사이트맵 위치 명시
+Sitemap: https://mcpkorea.com/sitemap.xml
+Host: https://mcpkorea.com 

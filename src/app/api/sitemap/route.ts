@@ -1,18 +1,20 @@
-import { MetadataRoute } from 'next';
+import { NextResponse } from 'next/server';
 import { getAllBlogPosts } from '@/utils/contentful';
 
-// 정적 내보내기에 필요한 동적 옵션 추가
+// Next.js 15에서는 기본적으로 빌드 시 정적으로 생성됩니다.
+export const runtime = 'edge';
 export const dynamic = 'force-static';
+export const revalidate = 86400; // 하루에 한 번 재검증 (초 단위)
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = "https://mcpkorea.com";
+export async function GET() {
+  const baseUrl = 'https://mcpkorea.com';
   
   // 정적 URL들 - 주요 페이지들
   const staticRoutes = [
     {
       url: baseUrl,
       lastModified: new Date().toISOString(),
-      priority: 1,
+      priority: 1.0,
     },
     {
       url: `${baseUrl}/blog`,
@@ -24,7 +26,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date().toISOString(),
       priority: 0.8,
     },
-    // MCP 관련 주제 페이지들 (JSON-LD에서 언급된 페이지들)
+    // MCP 관련 주제 페이지들
     {
       url: `${baseUrl}/topics/anthropic`,
       lastModified: new Date().toISOString(),
@@ -81,5 +83,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
 
   // 모든 경로 합치기
-  return [...staticRoutes, ...blogPostRoutes];
+  const allRoutes = [...staticRoutes, ...blogPostRoutes];
+  
+  // XML 형식으로 변환
+  const sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  ${allRoutes.map(route => `
+  <url>
+    <loc>${route.url}</loc>
+    <lastmod>${new Date(route.lastModified).toISOString().split('T')[0]}</lastmod>
+    <changefreq>${route.url === baseUrl ? 'daily' : 'weekly'}</changefreq>
+    <priority>${route.priority}</priority>
+  </url>`).join('')}
+</urlset>`;
+
+  // XML 형식으로 응답
+  return new NextResponse(sitemapXml, {
+    status: 200,
+    headers: {
+      'Content-Type': 'application/xml',
+      'Cache-Control': 'public, max-age=86400, stale-while-revalidate=604800',
+    },
+  });
 } 
