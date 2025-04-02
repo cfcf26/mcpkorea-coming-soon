@@ -39,6 +39,9 @@ export const metadata: Metadata = {
     url: "https://mcpkorea.com/blog",
     type: "website",
   },
+  alternates: {
+    canonical: "https://mcpkorea.com/blog",
+  },
 };
 
 // 명시적 캐싱 설정으로 블로그 포스트 데이터를 가져오는 함수

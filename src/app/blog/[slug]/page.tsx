@@ -247,6 +247,9 @@ export async function generateMetadata({
       title: fields.title,
       description: fields.summary,
     },
+    alternates: {
+      canonical: `https://mcpkorea.com/blog/${slug}`,
+    },
   };
 }
 
