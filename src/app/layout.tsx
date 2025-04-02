@@ -118,7 +118,17 @@ export default function RootLayout({
         <meta property="og:regDate" content={new Date().toISOString().split('T')[0].replace(/-/g, '')} />
         <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
         <link rel="manifest" href="/manifest.json" />
-        {/* Google Analytics */}
+        {/* Google 소유권 확인용 인라인 스크립트 */}
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-E72Y65YPBM" />
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-E72Y65YPBM');
+          `
+        }} />
+        {/* Google Analytics - Next.js Script 컴포넌트 */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-E72Y65YPBM"
           strategy="afterInteractive"
