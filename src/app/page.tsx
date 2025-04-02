@@ -2,6 +2,55 @@ import ThemeToggle from "@/components/ThemeToggle";
 import NewsletterForm from "@/components/NewsletterForm";
 import Footer from "@/components/Footer";
 import Script from "next/script";
+import { Metadata } from 'next';
+
+// 정적 메타데이터 설정
+export const metadata: Metadata = {
+  title: 'MCP Korea - 모델 컨텍스트 프로토콜',
+  description: 'Model Context Protocol(MCP)은 인공지능과 도구 간의 상호작용을 위한 표준 프로토콜입니다. MCP의 대중화를 위한 첫걸음.',
+  keywords: 'MCP, Model Context Protocol, 모델 컨텍스트 프로토콜, AI, LLM, Claude, Anthropic, Cursor, OpenAI, GPT',
+  openGraph: {
+    title: 'MCP Korea - 모델 컨텍스트 프로토콜',
+    description: 'Model Context Protocol(MCP)은 인공지능과 도구 간의 상호작용을 위한 표준 프로토콜입니다.',
+    url: 'https://mcpkorea.com',
+    siteName: 'MCP Korea',
+    locale: 'ko_KR',
+    type: 'website',
+    images: [{
+      url: 'https://mcpkorea.com/android-chrome-512x512.png',
+      width: 512,
+      height: 512,
+      alt: 'MCP Korea 로고',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'MCP Korea - 모델 컨텍스트 프로토콜',
+    description: 'Model Context Protocol(MCP)은 인공지능과 도구 간의 상호작용을 위한 표준 프로토콜입니다.',
+    images: ['https://mcpkorea.com/android-chrome-512x512.png'],
+  },
+  verification: {
+    google: 'ygeCUc8WZuix4vuDyGTZIvHFusAEOMZmVe__DmwiOhc', // 실제 Google 인증 코드
+    other: {
+      'naver-site-verification': '4ca1bbf7372952e751d827b2d22602a0654147b1', // 네이버 인증 코드
+    },
+  },
+  alternates: {
+    canonical: 'https://mcpkorea.com',
+    languages: {
+      'ko-KR': 'https://mcpkorea.com',
+      'en-US': 'https://mcpkorea.com/en',
+    },
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+    },
+  },
+};
 
 export default function Home() {
   const jsonLd = {
