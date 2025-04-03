@@ -45,7 +45,6 @@ export const metadata: Metadata = {
     canonical: "https://mcpkorea.com",
     languages: {
       "ko": "https://mcpkorea.com",
-      "en": "https://mcpkorea.com/en",
     },
   },
   robots: {

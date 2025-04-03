@@ -4,15 +4,21 @@ Allow: /
 Disallow: /api/
 Disallow: /admin/
 Disallow: /*.json$
+Allow: /manifest.json
+Allow: /mcp-schema.json
 Disallow: /private/
 
 User-agent: Googlebot
 Allow: /
 Disallow: /admin/
+Allow: /manifest.json
+Allow: /mcp-schema.json
 
 User-agent: Bingbot
 Allow: /
 Disallow: /admin/
+Allow: /manifest.json
+Allow: /mcp-schema.json
 
 # 사이트맵 위치 명시
 Sitemap: https://mcpkorea.com/sitemap.xml

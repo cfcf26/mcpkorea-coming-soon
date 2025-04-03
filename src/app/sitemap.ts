@@ -19,11 +19,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date().toISOString(),
       priority: 0.8,
     },
-    {
-      url: `${baseUrl}/mcp`,
-      lastModified: new Date().toISOString(),
-      priority: 0.8,
-    },
     // MCP 관련 주제 페이지들 (JSON-LD에서 언급된 페이지들)
     {
       url: `${baseUrl}/topics/anthropic`,
@@ -45,11 +40,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date().toISOString(),
       priority: 0.7,
     },
-    {
-      url: `${baseUrl}/topics/ai-api`,
-      lastModified: new Date().toISOString(),
-      priority: 0.7,
-    }
   ];
 
   // 블로그 게시물 URL들을 동적으로 가져오기
