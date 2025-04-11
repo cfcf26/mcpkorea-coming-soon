@@ -72,11 +72,14 @@ function convertEntryToBlogPost(entry: Entry<any>): BlogPost {
 export async function getAllBlogPosts(preview: boolean = false): Promise<BlogPost[]> {
   try {
     const client = getClient(preview);
+    // fetch 옵션 추가 - 캐시 사용하지 않음
+    const options = { cache: 'no-store' as RequestCache };
     const entries: EntryCollection<any> = await client.getEntries({
       content_type: 'mcpKoreaBlogPost',
       order: '-sys.createdAt',
-      include: 10
-    });
+      include: 10,
+      limit: 100
+    }, options);
 
     return entries.items.map(convertEntryToBlogPost);
   } catch (error) {
@@ -89,7 +92,9 @@ export async function getAllBlogPosts(preview: boolean = false): Promise<BlogPos
 export async function getBlogPostById(id: string, preview: boolean = false): Promise<BlogPost | null> {
   try {
     const client = getClient(preview);
-    const entry = await client.getEntry(id, { include: 10 });
+    // fetch 옵션 추가 - 캐시 사용하지 않음
+    const options = { cache: 'no-store' as RequestCache };
+    const entry = await client.getEntry(id, { include: 10, ...options });
     return convertEntryToBlogPost(entry);
   } catch (error) {
     console.error('Error fetching entry by ID:', error);
@@ -106,12 +111,14 @@ export async function getBlogPostBySlug(slug: string, preview: boolean = false):
 export async function getBlogPostsByTag(tag: string, preview: boolean = false): Promise<BlogPost[]> {
   try {
     const client = getClient(preview);
+    // fetch 옵션 추가 - 캐시 사용하지 않음
+    const options = { cache: 'no-store' as RequestCache };
     const entries: EntryCollection<any> = await client.getEntries({
       content_type: 'mcpKoreaBlogPost',
       'fields.tags[in]': tag,
       order: '-sys.createdAt',
       include: 10
-    });
+    }, options);
 
     return entries.items.map(convertEntryToBlogPost);
   } catch (error) {

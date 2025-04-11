@@ -5,6 +5,9 @@ import { formatDate, isRecentDate } from '@/utils/date';
 import Footer from "@/components/Footer";
 import ThemeToggle from "@/components/ThemeToggle";
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // Contentful API 응답 항목 타입
 interface ContentfulResponseItem {
   sys: {
@@ -49,10 +52,10 @@ async function getPostsData(): Promise<BlogPost[]> {
   try {
     // Next.js 15에서는 명시적 캐싱 설정 필요
     const response = await fetch(
-      `https://cdn.contentful.com/spaces/${process.env.CONTENTFUL_SPACE_ID}/environments/master/entries?content_type=mcpKoreaBlogPost&order=-fields.publishDate,-sys.createdAt&access_token=${process.env.CONTENTFUL_ACCESS_TOKEN}&include=2`,
+      `https://cdn.contentful.com/spaces/${process.env.CONTENTFUL_SPACE_ID}/environments/master/entries?content_type=mcpKoreaBlogPost&order=-fields.publishDate,-sys.createdAt&access_token=${process.env.CONTENTFUL_ACCESS_TOKEN}&include=2&limit=100`,
       {
-        // 5분간 캐시 유지 (300초)
-        next: { revalidate: 300 }
+        // 항상 최신 데이터 가져오기 (캐시 사용하지 않음)
+        cache: 'no-store'
       }
     );
     

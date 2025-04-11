@@ -9,6 +9,9 @@ import Script from 'next/script';
 import RichTextRenderer from '@/components/blog/RichTextRenderer';
 import { Document } from '@contentful/rich-text-types';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // Contentful API 응답 타입
 interface ContentfulEntry {
   sys: {
@@ -44,7 +47,7 @@ async function getPostData(id: string): Promise<BlogPost | null> {
     const entryResponse = await fetch(
       `https://cdn.contentful.com/spaces/${process.env.CONTENTFUL_SPACE_ID}/environments/master/entries/${id}?access_token=${process.env.CONTENTFUL_ACCESS_TOKEN}`,
       {
-        next: { revalidate: 300 }
+        cache: 'no-store'
       }
     );
     
@@ -91,7 +94,7 @@ async function getPostData(id: string): Promise<BlogPost | null> {
           const assetResponse = await fetch(
             `https://cdn.contentful.com/spaces/${process.env.CONTENTFUL_SPACE_ID}/environments/master/assets/${assetId}?access_token=${process.env.CONTENTFUL_ACCESS_TOKEN}`,
             {
-              next: { revalidate: 300 }
+              cache: 'no-store'
             }
           );
           
@@ -171,10 +174,9 @@ async function getAllPostIds() {
   try {
     // Next.js 15에서는 명시적 캐싱 설정 필요
     const response = await fetch(
-      `https://cdn.contentful.com/spaces/${process.env.CONTENTFUL_SPACE_ID}/environments/master/entries?content_type=mcpKoreaBlogPost&access_token=${process.env.CONTENTFUL_ACCESS_TOKEN}`,
+      `https://cdn.contentful.com/spaces/${process.env.CONTENTFUL_SPACE_ID}/environments/master/entries?content_type=mcpKoreaBlogPost&access_token=${process.env.CONTENTFUL_ACCESS_TOKEN}&limit=100`,
       { 
-        // 1시간 캐시 유지 (3600초)
-        next: { revalidate: 3600 } 
+        cache: 'no-store'
       }
     );
     
@@ -255,7 +257,8 @@ export async function generateMetadata({
 
 // 정적 경로 생성을 위한 함수
 export async function generateStaticParams() {
-  return await getAllPostIds();
+  // 동적 렌더링을 위해 빈 배열 반환 (모든 경로 동적으로 생성)
+  return [];
 }
 
 export default async function BlogPost({
