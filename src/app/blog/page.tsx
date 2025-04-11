@@ -173,7 +173,7 @@ export default async function BlogPage() {
             <section id="featured" className="mb-16">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white">인기 포스트</h2>
-                <a href="#posts" className="text-blue-600 dark:text-blue-400 hover:underline text-sm">모든 포스트 보기 →</a>
+                <Link href="#posts" className="text-blue-600 dark:text-blue-400 hover:underline text-sm">모든 포스트 보기 →</Link>
               </div>
               
               <div className="grid gap-8 lg:grid-cols-2">
