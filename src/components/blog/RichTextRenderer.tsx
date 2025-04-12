@@ -131,7 +131,7 @@ const renderMarkdownCodeBlock = (text: string): React.ReactNode => {
             code({ node, inline, className, children, ...props }) {
               return !inline ? (
                 <pre className="p-0 bg-[#0d1117] rounded-lg overflow-hidden border border-foreground/10">
-                  <code className={`${className || ''} p-4 pt-8 block overflow-x-auto text-sm font-mono`}>
+                  <code className={`hljs ${className || ''} p-4 pt-8 block overflow-x-auto text-sm font-mono`}>
                     {children}
                   </code>
                 </pre>
@@ -160,12 +160,15 @@ export default function RichTextRenderer({ content, className = '', assets = {} 
   // 구문 강조 초기화
   useEffect(() => {
     // highlight.js 초기화 및 직접 추가된 코드 블록에만 적용
-    // (마크다운으로 처리되는 코드 블록은 rehype-highlight이 처리)
     hljs.configure({ languages: ['javascript', 'typescript', 'python', 'jsx', 'tsx', 'json', 'css', 'html', 'bash'] });
     
-    // 마크다운 코드 블록이 아닌 일반 코드 블록에만 적용
-    document.querySelectorAll('pre code:not(.language-*)').forEach((block) => {
-      hljs.highlightElement(block as HTMLElement);
+    // 모든 코드 블록에 하이라이팅 적용
+    // 마크다운으로 처리된 코드 블록도 이미 렌더링된 상태라면 하이라이팅
+    document.querySelectorAll('pre code').forEach((block) => {
+      // 이미 rehype-highlight로 처리되지 않은 코드 블록에만 적용
+      if (!block.classList.contains('hljs')) {
+        hljs.highlightElement(block as HTMLElement);
+      }
     });
   }, [content]);
 
@@ -204,10 +207,15 @@ export default function RichTextRenderer({ content, className = '', assets = {} 
     },
     renderNode: {
       [BLOCKS.PARAGRAPH]: (node: any, children: React.ReactNode) => {
-        // 마크다운 코드 블록 처리
-        const plainText = documentToPlainTextString(node);
-        if (isMarkdownCodeBlock(plainText)) {
-          return renderMarkdownCodeBlock(plainText);
+        try {
+          // 마크다운 코드 블록 처리
+          const plainText = documentToPlainTextString(node);
+          if (plainText && typeof plainText === 'string' && isMarkdownCodeBlock(plainText)) {
+            return renderMarkdownCodeBlock(plainText);
+          }
+        } catch (error) {
+          console.error('코드 블록 파싱 오류:', error);
+          // 오류가 발생하면 일반 문단으로 렌더링
         }
         return <p className="mb-6 text-foreground/90 leading-relaxed">{children}</p>;
       },
