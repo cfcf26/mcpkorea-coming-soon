@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAllBlogPosts } from '@/utils/contentful';
 
-// Next.js 15에서는 기본적으로 빌드 시 정적으로 생성됩니다.
-export const runtime = 'edge';
+// 정적 내보내기 사용 시 Edge 런타임 제거
 export const dynamic = 'force-static';
 export const revalidate = 86400; // 하루에 한 번 재검증 (초 단위)
 

@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   /* config options here */
-  // output: 'export', // 주석 처리: 동적 경로에서 정적 내보내기 사용 불가
+  output: 'export', // 정적 내보내기를 위해 주석 해제하고 활성화
   images: {
     unoptimized: true,
   },
