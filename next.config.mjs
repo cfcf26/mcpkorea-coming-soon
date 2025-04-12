@@ -101,9 +101,10 @@ const nextConfig = {
             test: /[\\/]node_modules[\\/]/,
             name(module) {
               // node_modules 내의 패키지 이름 추출
-              const packageName = module.context.match(/[\\/]node_modules[\\/](.*?)([\\/]|$)/)[1];
+              const match = module.context?.match(/[\\/]node_modules[\\/](.*?)([\\/]|$)/);
+              if (!match) return 'npm.vendor'; // 매치가 없는 경우 기본값 반환
               // 파일 이름 해싱을 위해 npm 패키지 이름 반환
-              return `npm.${packageName.replace('@', '')}`;
+              return `npm.${match[1].replace('@', '')}`;
             },
             priority: 10,
             reuseExistingChunk: true,
