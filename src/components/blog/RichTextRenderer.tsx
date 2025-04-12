@@ -1,11 +1,17 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { documentToReactComponents } from '@contentful/rich-text-react-renderer';
+import { documentToPlainTextString } from '@contentful/rich-text-plain-text-renderer';
 import { BLOCKS, INLINES, MARKS, Document } from '@contentful/rich-text-types';
 import Image from 'next/image';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
+import hljs from 'highlight.js';
+import 'highlight.js/styles/github-dark.css';
+import ReactMarkdown from 'react-markdown';
+import rehypeHighlight from 'rehype-highlight';
+import 'highlight.js/styles/github-dark.css'; // 동일한 스타일 테마 사용
 
 // 동적 임포트를 통한 무거운 컴포넌트 최적화
 const VideoPlayer = dynamic(() => import('./media/VideoPlayer'), { ssr: false });
@@ -59,10 +65,109 @@ function optimizeContentfulImageUrl(url: string): string {
   return url;
 }
 
+// 마크다운 코드 블록 감지 함수
+const isMarkdownCodeBlock = (text: string): boolean => {
+  // 앞뒤 공백을 제거하고 처음과 끝이 ```로 감싸져 있는지 확인
+  const trimmedText = text.trim();
+  // 시작이 ```이고 끝도 ```인 경우만 코드 블록으로 처리
+  return trimmedText.startsWith('```') && trimmedText.endsWith('```');
+};
+
+// 마크다운 코드 블록 처리 함수
+const renderMarkdownCodeBlock = (text: string): React.ReactNode => {
+  // 마크다운 형식에서 코드와 언어 추출
+  const trimmedText = text.trim();
+  const firstLineMatch = trimmedText.match(/^```(\w+)?/);
+  const language = firstLineMatch?.[1] || '';
+  
+  // ```언어 부분과 끝의 ``` 제거
+  let codeContent = trimmedText;
+  codeContent = codeContent.replace(/^```(\w+)?/, ''); // 시작 부분 제거
+  codeContent = codeContent.replace(/```$/, ''); // 끝 부분 제거
+  codeContent = codeContent.trim(); // 앞뒤 공백 제거
+  
+  // 복사 상태 관리를 위한 커스텀 컴포넌트
+  const CodeBlockWithCopy = () => {
+    const [copied, setCopied] = React.useState(false);
+    
+    const handleCopy = () => {
+      navigator.clipboard.writeText(codeContent);
+      setCopied(true);
+      
+      // 2초 후 복사 상태 초기화
+      setTimeout(() => {
+        setCopied(false);
+      }, 2000);
+    };
+    
+    return (
+      <div className="mb-6 relative group">
+        {language && (
+          <div className="absolute top-0 right-0 px-3 py-1 text-xs font-mono bg-foreground/10 text-foreground/80 rounded-bl">
+            {language}
+          </div>
+        )}
+        <button
+          onClick={handleCopy}
+          className="absolute top-0 right-0 p-2 text-sm text-foreground/60 hover:text-foreground/90 transition-colors rounded-md opacity-0 group-hover:opacity-100 focus:opacity-100"
+          aria-label="코드 복사"
+          style={{ right: language ? '60px' : '0px' }}
+        >
+          {copied ? (
+            <span className="flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-green-500">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+              </svg>
+            </span>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
+            </svg>
+          )}
+        </button>
+        <ReactMarkdown
+          rehypePlugins={[rehypeHighlight]}
+          components={{
+            code({ node, inline, className, children, ...props }) {
+              return !inline ? (
+                <pre className="p-0 bg-[#0d1117] rounded-lg overflow-hidden border border-foreground/10">
+                  <code className={`${className || ''} p-4 pt-8 block overflow-x-auto text-sm font-mono`}>
+                    {children}
+                  </code>
+                </pre>
+              ) : (
+                <code className="px-1 py-0.5 bg-foreground/10 rounded text-sm font-mono" {...props}>
+                  {children}
+                </code>
+              );
+            }
+          }}
+        >
+          {text}
+        </ReactMarkdown>
+      </div>
+    );
+  };
+  
+  return <CodeBlockWithCopy />;
+};
+
 export default function RichTextRenderer({ content, className = '', assets = {} }: RichTextRendererProps) {
   if (!content) {
     return null;
   }
+
+  // 구문 강조 초기화
+  useEffect(() => {
+    // highlight.js 초기화 및 직접 추가된 코드 블록에만 적용
+    // (마크다운으로 처리되는 코드 블록은 rehype-highlight이 처리)
+    hljs.configure({ languages: ['javascript', 'typescript', 'python', 'jsx', 'tsx', 'json', 'css', 'html', 'bash'] });
+    
+    // 마크다운 코드 블록이 아닌 일반 코드 블록에만 적용
+    document.querySelectorAll('pre code:not(.language-*)').forEach((block) => {
+      hljs.highlightElement(block as HTMLElement);
+    });
+  }, [content]);
 
   // 디버깅: 에셋 정보 로깅
   console.log('전달된 에셋 키:', Object.keys(assets));
@@ -98,9 +203,14 @@ export default function RichTextRenderer({ content, className = '', assets = {} 
       ),
     },
     renderNode: {
-      [BLOCKS.PARAGRAPH]: (node: any, children: React.ReactNode) => (
-        <p className="mb-6 text-foreground/90 leading-relaxed">{children}</p>
-      ),
+      [BLOCKS.PARAGRAPH]: (node: any, children: React.ReactNode) => {
+        // 마크다운 코드 블록 처리
+        const plainText = documentToPlainTextString(node);
+        if (isMarkdownCodeBlock(plainText)) {
+          return renderMarkdownCodeBlock(plainText);
+        }
+        return <p className="mb-6 text-foreground/90 leading-relaxed">{children}</p>;
+      },
       [BLOCKS.HEADING_1]: (node: any, children: React.ReactNode) => (
         <h1 className="text-4xl font-bold mt-12 mb-6">{children}</h1>
       ),
@@ -119,6 +229,59 @@ export default function RichTextRenderer({ content, className = '', assets = {} 
       [BLOCKS.HEADING_6]: (node: any, children: React.ReactNode) => (
         <h6 className="text-base font-bold mt-6 mb-2">{children}</h6>
       ),
+      [BLOCKS.CODE]: (node: any) => {
+        // 코드 블록 렌더링
+        const codeContent = node.content[0].value || '';
+        const language = node.data?.language || '';
+        const languageClass = language ? `language-${language}` : '';
+        
+        // 복사 상태 관리
+        const [copied, setCopied] = React.useState(false);
+        
+        // 복사 함수
+        const handleCopy = () => {
+          navigator.clipboard.writeText(codeContent);
+          setCopied(true);
+          
+          // 2초 후 복사 상태 초기화
+          setTimeout(() => {
+            setCopied(false);
+          }, 2000);
+        };
+        
+        return (
+          <div className="mb-6 relative group">
+            {language && (
+              <div className="absolute top-0 right-0 px-3 py-1 text-xs font-mono bg-foreground/10 text-foreground/80 rounded-bl">
+                {language}
+              </div>
+            )}
+            <button
+              onClick={handleCopy}
+              className="absolute top-0 right-0 p-2 text-sm text-foreground/60 hover:text-foreground/90 transition-colors rounded-md opacity-0 group-hover:opacity-100 focus:opacity-100"
+              aria-label="코드 복사"
+              style={{ right: language ? '60px' : '0px' }}
+            >
+              {copied ? (
+                <span className="flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-green-500">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                  </svg>
+                </span>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
+                </svg>
+              )}
+            </button>
+            <pre className="p-0 bg-[#0d1117] rounded-lg overflow-hidden border border-foreground/10">
+              <code className={`hljs ${languageClass} p-4 pt-8 block overflow-x-auto text-sm font-mono`}>
+                {codeContent}
+              </code>
+            </pre>
+          </div>
+        );
+      },
       [BLOCKS.UL_LIST]: (node: any, children: React.ReactNode) => (
         <ul className="list-disc pl-10 mb-6 space-y-2">{children}</ul>
       ),
